@@ -15,11 +15,14 @@
 #define DRAIN 1
 #define PROBE_BW 2
 #define PROBE_RTT 3
+#define DRAIN_RATE 25
+
 
 // connection modes
 #define TCP_RENO 0
 #define TCP_NEW_RENO 1
 #define TCP_BBR 2
+
 
 
 #endif

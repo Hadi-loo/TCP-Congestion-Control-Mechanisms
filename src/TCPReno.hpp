@@ -14,6 +14,7 @@ private:
     int cwnd;                       // Congestion window
     int ssthresh;                   // Slow start Threshold
     int rtt;                        // Round-trip time
+    int bandwidth;                  // network bandwidth
 
 
 public:
@@ -22,7 +23,7 @@ public:
     void sendDataBBr();
     void onPacketLoss(int connection_mode , int lost_packets_count);
     void onRTTUpdate(int _rtt);
-    
+    void onRTTUpdateBBR(int _rtt);
 };
 
 

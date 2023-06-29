@@ -14,7 +14,7 @@ TCPConnection::TCPConnection(int _cwnd, int _ssthresh, int _rtt){
     rtt = _rtt;                     // Initial round-trip time
 }
 
-void TCPConnection::sendData(bool newReno = false, int lost_packets_count = 1){
+void TCPConnection::sendData(bool newReno, int lost_packets_count){
     // Slow start
     int mode = SLOW_START;
     for (int i = 0; i < SEND_DATA_CYCLES; i++){
@@ -92,16 +92,31 @@ void TCPConnection::onRTTUpdate(int _rtt){
     return;
 }
 
+void TCPConnection::onRTTUpdateBBR(int _rtt){
+    this->rtt = _rtt;
+    cout << "--------------------------------------" << endl;
+    cout << "New RTT captured time: " << this->rtt << endl;
+    cout << "--------------------------------------" << endl;
+    return;
+}
+
 void TCPConnection::sendDataBBr(){
     int mode = START_UP;
-
+    int bandwidth = 1000;
+    int rtt_increase_rate = 15;
+    int rtt_decrease_rate = 20;
+    int bandwidth_impact_rate = 10;
 
     for (int i = 0; i < SEND_DATA_CYCLES; i++){
         sleep(1);
         switch (mode)
         {
         case START_UP:
-            for(cwnd; cwnd < ssthresh; cwnd *= cwnd){}
+            /*
+            Start to increase congestion window size like what we had in TCP RENO
+            */
+            
+            for(cwnd; cwnd < ssthresh; cwnd += cwnd){}
             cout << "--------------------------------------" << endl;
             cout << "Mode: Start Up" << endl;
             cout << "Last congestion window size is: " << cwnd;
@@ -110,17 +125,54 @@ void TCPConnection::sendDataBBr(){
             break;
 
         case DRAIN:
-            
+            /*
+            Decrease the window size with the DRAIN_RATE parameter
+            */
+            for(cwnd; cwnd > ssthresh; cwnd -= DRAIN_RATE)
+            cout << "--------------------------------------" << endl;
+            cout << "Mode: DRAIN" << endl;
+            cout << "Last congestion window size is: " << cwnd;
+            cout << endl << "--------------------------------------" << endl;
+            mode = PROBE_BW;
             break;
 
         case PROBE_BW:
+            /*
+            Calculate the estimated bandwidth for current time
+            */
+            if(cwnd > ssthresh){
+                cwnd += bandwidth_impact_rate;
+            }
+            else if(cwnd < ssthresh){
+                cwnd -= bandwidth_impact_rate;
+            }
+            cout << "--------------------------------------" << endl;
+            cout << "Mode: PROBE_BW" << endl;
+            cout << "Last congestion window size is: " << cwnd;
+            cout << endl << "--------------------------------------" << endl;
+            mode = PROBE_RTT;
 
             break;
 
         case PROBE_RTT:
+            /*
+            Calculate the estimated rtt for current time
+            */
+            if(cwnd > ssthresh){
+                onRTTUpdateBBR(rtt_increase_rate);
+                cwnd += (rtt_increase_rate/(1 + rtt)) * cwnd;
+            }
+            else if(cwnd < ssthresh){
+                onRTTUpdateBBR(rtt_decrease_rate);
+                cwnd -= (rtt_increase_rate/(1 + rtt)) * cwnd; 
+            }
+            cout << "--------------------------------------" << endl;
+            cout << "Mode: PROBE_RTT" << endl;
+            cout << "Last congestion window size is: " << cwnd;
+            cout << endl << "--------------------------------------" << endl;
+            mode = PROBE_BW;
 
             break;
-
 
         default:
             break;

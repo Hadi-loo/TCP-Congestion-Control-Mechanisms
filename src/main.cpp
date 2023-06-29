@@ -1,11 +1,18 @@
 #include "TCPReno.hpp"
-#include <iostream>
 
-int main() {
-    int cwnd = 1;
-    int ssthresh = 65535;
-    int rtt = 0;
-    TCPConnection tcp(cwnd, ssthresh, rtt, "reno");
 
+
+int main(){
+    TCPConnection connection1(1, 65535, 0);
     
+    connection1.sendData();
+    connection1.onRTTUpdate(2);
+    
+
+
+
+
+
+
+
 }

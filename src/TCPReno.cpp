@@ -103,6 +103,7 @@ void TCPConnection::onRTTUpdateBBR(int _rtt){
 void TCPConnection::sendDataBBr(){
     int mode = START_UP;
     int bandwidth = 1000;
+    int drain_rate = 25;
     int rtt_increase_rate = 15;
     int rtt_decrease_rate = 20;
     int bandwidth_impact_rate = 10;
@@ -128,7 +129,7 @@ void TCPConnection::sendDataBBr(){
             /*
             Decrease the window size with the DRAIN_RATE parameter
             */
-            for(cwnd; cwnd > ssthresh; cwnd -= DRAIN_RATE)
+            for(cwnd; cwnd > ssthresh; cwnd -= drain_rate)
             cout << "--------------------------------------" << endl;
             cout << "Mode: DRAIN" << endl;
             cout << "Last congestion window size is: " << cwnd;
@@ -141,10 +142,10 @@ void TCPConnection::sendDataBBr(){
             Calculate the estimated bandwidth for current time
             */
             if(cwnd > ssthresh){
-                cwnd += bandwidth_impact_rate;
+                cwnd -= bandwidth_impact_rate;
             }
             else if(cwnd < ssthresh){
-                cwnd -= bandwidth_impact_rate;
+                cwnd += bandwidth_impact_rate;
             }
             cout << "--------------------------------------" << endl;
             cout << "Mode: PROBE_BW" << endl;
@@ -160,11 +161,11 @@ void TCPConnection::sendDataBBr(){
             */
             if(cwnd > ssthresh){
                 onRTTUpdateBBR(rtt_increase_rate);
-                cwnd += (rtt_increase_rate/(1 + rtt)) * cwnd;
+                cwnd -= (rtt_increase_rate/(1 + rtt)) * cwnd;
             }
             else if(cwnd < ssthresh){
                 onRTTUpdateBBR(rtt_decrease_rate);
-                cwnd -= (rtt_increase_rate/(1 + rtt)) * cwnd; 
+                cwnd += (rtt_increase_rate/(1 + rtt)) * cwnd; 
             }
             cout << "--------------------------------------" << endl;
             cout << "Mode: PROBE_RTT" << endl;

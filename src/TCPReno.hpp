@@ -18,8 +18,9 @@ private:
 
 public:
     TCPConnection(int _cwnd, int _ssthresh, int _rtt);
-    void sendData();
-    void onPacketLoss();
+    void sendData(bool newReno = false, int lost_packets_count = 1);
+    void sendDataBBr();
+    void onPacketLoss(int connection_mode , int lost_packets_count);
     void onRTTUpdate(int _rtt);
     
 };

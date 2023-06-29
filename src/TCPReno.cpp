@@ -14,7 +14,7 @@ TCPConnection::TCPConnection(int _cwnd, int _ssthresh, int _rtt){
     rtt = _rtt;                     // Initial round-trip time
 }
 
-void TCPConnection::sendData(){
+void TCPConnection::sendData(bool newReno = false, int lost_packets_count = 1){
     // Slow start
     int mode = SLOW_START;
     for (int i = 0; i < SEND_DATA_CYCLES; i++){
@@ -52,7 +52,11 @@ void TCPConnection::sendData(){
             break;
 
         case FAST_RECOVERY:
-            cwnd /= 2;
+            if(newReno == true)
+                cwnd /= 2;
+            else
+                cwnd /= lost_packets_count;
+
             mode = CONGESTION_AVOIDANCE;
             cout << "--------------------------------------" << endl;
             cout << "Fast Recovery Activated" << endl;
@@ -64,13 +68,20 @@ void TCPConnection::sendData(){
             break;
         }
     }
+    return;
 }
 
-void TCPConnection::onPacketLoss(){
+void TCPConnection::onPacketLoss(int connection_mode , int lost_packets_count){
     cout << "--------------------------------------" << endl;
-    cout << "3 duplicate ACK received" << endl;
+    cout << "Duplicate ACKs received" << endl;
     cout << "--------------------------------------" << endl;
-    this->sendData();
+    if(connection_mode == TCP_RENO)
+        this->sendData();
+    else if(connection_mode == TCP_NEW_RENO)
+        this->sendData(true, lost_packets_count);
+    else if(connection_mode == TCP_BBR)
+        this->sendDataBBr();
+    return;
 }
 
 void TCPConnection::onRTTUpdate(int _rtt){
@@ -78,5 +89,41 @@ void TCPConnection::onRTTUpdate(int _rtt){
     cout << "--------------------------------------" << endl;
     cout << "RTT time updated to: " << this->rtt << endl;
     cout << "--------------------------------------" << endl;
+    return;
 }
 
+void TCPConnection::sendDataBBr(){
+    int mode = START_UP;
+
+
+    for (int i = 0; i < SEND_DATA_CYCLES; i++){
+        sleep(1);
+        switch (mode)
+        {
+        case START_UP:
+            for(cwnd; cwnd < ssthresh; cwnd *= cwnd){}
+            cout << "--------------------------------------" << endl;
+            cout << "Mode: Start Up" << endl;
+            cout << "Last congestion window size is: " << cwnd;
+            cout << endl << "--------------------------------------" << endl;
+            mode = DRAIN;
+            break;
+
+        case DRAIN:
+            
+            break;
+
+        case PROBE_BW:
+
+            break;
+
+        case PROBE_RTT:
+
+            break;
+
+
+        default:
+            break;
+        }
+    }
+}

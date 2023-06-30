@@ -39,6 +39,19 @@ TCP New Reno is alomost like TCP Reno, but it works more wisely than TCP Reno in
 TCP BBR, on the other hand, is a modern congestion control algorithm developed by google in 2016. in BBR, the main focues is on estimating the available bandwidth and network latency (round-trip-time), in order to find the bandwidth-latency product and calculating the most efficient congestion window size of the network. BBR dynamically adjusts its congestion window based on the measured network conditions, aiming to maximize both network utilization and minimize latency. It is particularly effective in high-speed and long-distance networks, providing faster and more efficient data transfer compared to traditional TCP congestion control algorithms.    
 
 
+#### 5. Evaluating the simluation of TCP Reno, TCP New Reno, and TCP BBR:    
+
+
+#### 6. Describing other congestion avoidance protocols and comparing them with algorithms that provided in this project:
+- **Compound TCP**: Compound TCP (CTCP) is a congestion control algorithm developed by Microsoft for use in Windows operating systems. It is designed to optimize TCP performance in high-speed and high-delay networks. CTCP combines two congestion control algorithms: the traditional TCP Reno and the TCP Vegas.
+- **TCP Hybla**: TCP Hybla is a congestion control algorithm developed by the Politecnico di Torino in Italy. It is designed to improve the performance of TCP in networks with high bandwidth and long round-trip times (RTTs). TCP Hybla aims to address the inherent limitations of traditional TCP Reno, which may experience poor throughput and excessive delay in such network conditions.
+- **TCP Cubic**: CUBIC (Cubic Congestion Control) is a TCP congestion control algorithm designed to provide efficient and fair bandwidth utilization in modern networks. CUBIC aims to address the limitations of traditional TCP Reno congestion control, which can lead to suboptimal performance in high-speed, long-distance networks. CUBIC uses a different approach to determine the appropriate sending rate and congestion window size.Unlike Reno, which uses a linear growth pattern, CUBIC employs a cubic growth pattern for the congestion window. It allows for a more aggressive increase in the sending rate during the congestion avoidance phase, maximizing throughput and reducing latency.
+
+
+TCP Cubic is works better than TCP Reno, New Reno, and BBR in terms of the needed convergence time to the maximum possible CWND size in the network. Contrary to other protocols, it uses a cubic function to calculate the size of the congestion window, which results in a more aggressive slope of raising the window size at low congestion times and a less aggressive slope at high congestion times.  
+
+
+
 
 
 

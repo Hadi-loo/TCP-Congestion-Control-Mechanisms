@@ -30,7 +30,7 @@ duplicate ACKs for several sent packets, it divides the congestion window size s
 but in TCP New Reno, the algorithm only divides the congestino window size once, thus it is
 works more effiecient than the normal TCP Reno algorithm.
 
-#### 3. Definition of TCP New Reno algorithm:
+#### 3. Definition of TCP BBR algorithm:
 TCP BBR, also known as Bottleneck Bandwidth and Round-trip propagation time, is an congestion control algorithm created by Google. Its primary goal is to maximize network utilization and minimize latency by dynamically estimating the available bandwidth and network latency. BBR adopts a model-based approach to determine the ideal sending rate for TCP flows, considering both the bottleneck bandwidth and the round-trip time of the network. By accurately measuring these parameters, BBR optimizes the transmission rate, reducing queuing delay, and enhancing overall network performance. It is particularly effective in high-speed and long-distance networks, delivering faster and more efficient data transfer compared to traditional TCP congestion control algorithms.
 
 #### 4. Difference of TCP Reno, TCP New Reno, and TCP BBR:   

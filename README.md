@@ -1,4 +1,4 @@
-![image](https://github.com/Hadi-loo/CN_CHomeworks4/assets/83643850/4efaffe5-6044-427c-9229-6cba20e65a81)# CN_CHomeworks4
+# Congestion Control Mechanisms
 
 This Repo contains a simulation of 3 famous TCP protocols, "TCP Reno", "TCP New Reno", and "TCP BBR" coded with C++.
 

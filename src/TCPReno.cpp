@@ -1,94 +1,183 @@
 #include "TCPReno.hpp"
 
 
+void pretty_timer(int &rtt){
+    for (int i = 0 ; i < 5; i++){
+        cout << " . ";
+        sleep(rtt/5);
+    }
+}
 
-
-TCPConnection::TCPConnection(int &_cwnd, int &_ssthresh, int &_rtt, const string &_congestion_control_method){
+TCPConnection::TCPConnection(int _cwnd, int _ssthresh, int _rtt){
     cwnd = _cwnd;                   // Initital congestion window size
     ssthresh = _ssthresh;           // Initial slow start threshold
-    rtt = _rtt;
-    congestion_control_method = _congestion_control_method;
-    reno_state = "slow_start";
-    // new_reno_state = ? 
-    // bbr_state = ?
+    rtt = _rtt;                     // Initial round-trip time
 }
 
-int TCPConnection::getCwnd(){
-    return cwnd;
-}
+void TCPConnection::sendData(bool newReno, int lost_packets_count){
+    // Slow start
+    int mode = SLOW_START;
+    for (int i = 0; i < SEND_DATA_CYCLES; i++){
+        sleep(1);
+        switch (mode)
+        {
+        case SLOW_START:
+            for(cwnd; cwnd < ssthresh; cwnd += cwnd){
+                // cout << "--------------------------------------" << endl;
+                // cout << "Current congestion window size is: " << cwnd;
+                // cout << "Sending data";
+                // pretty_timer(this->rtt);
+                // cout << endl << "--------------------------------------" << endl;
+            }
+            cout << "--------------------------------------" << endl;
+            cout << "Mode: Slow Start" << endl;
+            cout << "Last congestion window size is: " << cwnd;
+            cout << endl << "--------------------------------------" << endl;
+            mode = FAST_RECOVERY;
+            break;
 
-int TCPConnection::getSsthresh(){
-    return ssthresh;
-}
+        case CONGESTION_AVOIDANCE:
+            for(cwnd; cwnd < ssthresh; cwnd += AIMD_INCREASE_RATE){
+                // cout << "--------------------------------------" << endl;
+                // cout << "Current congestion window size is: " << cwnd;
+                // cout << "Sending data";
+                // pretty_timer(this->rtt);
+                // cout << endl << "--------------------------------------" << endl;
+            }
+            cout << "--------------------------------------" << endl;
+            cout << "Mode: Congestion Avoidance" << endl;
+            cout << "Last congestion window size is: " << cwnd;
+            cout << endl << "--------------------------------------" << endl;
+            mode = FAST_RECOVERY;
+            break;
 
-int TCPConnection::getRTT(){
-    return rtt;
-}
+        case FAST_RECOVERY:
+            if(newReno == true)
+                cwnd /= 2;
+            else
+                cwnd /= 2 * lost_packets_count;
 
-string TCPConnection::getCongestionControlMethod(){
-    return congestion_control_method;
-}
+            mode = CONGESTION_AVOIDANCE;
+            cout << "--------------------------------------" << endl;
+            cout << "Fast Recovery Activated" << endl;
+            cout << "Last congestion window size is: " << cwnd;
+            cout << endl << "--------------------------------------" << endl;
+            break;
 
-void TCPConnection::setCwnd(int _cwnd){
-    cwnd = _cwnd;
-}
-
-void TCPConnection::setSsthresh(int _ssthresh){
-    ssthresh = _ssthresh;
-}
-
-void TCPConnection::setRTT(int _rtt){
-    rtt = _rtt;
-}
-
-void TCPConnection::setCongestionControlMethod(string _congestion_control_method){
-    congestion_control_method = _congestion_control_method;
-}
-
-void TCPConnection::sendData(){
-    if (congestion_control_method == "reno") {
-        renoSendData();
-    } else if (congestion_control_method == "new_reno") {
-        newRenoSendData();
-    } else if (congestion_control_method == "bbr") {
-        bbrSendData();
-    } else {
-        cout << "Invalid congestion control method" << endl;
-    }
-}
-
-void TCPConnection::renoSendData(){
-    if (reno_state == "slow_start") {
-        cwnd = cwnd * 2;
-        if (cwnd >= ssthresh) {
-            reno_state = "congestion_avoidance";
+        default:
+            break;
         }
-    } else if (reno_state == "congestion_avoidance") {
-        cwnd = cwnd + 1;
-    } else if (reno_state == "fast_recovery") {
-        cwnd = ssthresh;
-        reno_state = "congestion_avoidance";
-    } else {
-        cout << "Invalid reno state" << endl;
+    }
+    return;
+}
+
+void TCPConnection::onPacketLoss(int connection_mode , int lost_packets_count){
+    cout << "--------------------------------------" << endl;
+    cout << "Duplicate ACKs received" << endl;
+    cout << "--------------------------------------" << endl;
+    if(connection_mode == TCP_RENO)
+        this->sendData(false, lost_packets_count);
+    else if(connection_mode == TCP_NEW_RENO)
+        this->sendData(true, lost_packets_count);
+    else if(connection_mode == TCP_BBR)
+        this->sendDataBBr();
+    return;
+}
+
+void TCPConnection::onRTTUpdate(int _rtt){
+    this->rtt = _rtt;
+    cout << "--------------------------------------" << endl;
+    cout << "RTT time updated to: " << this->rtt << endl;
+    cout << "--------------------------------------" << endl;
+    return;
+}
+
+void TCPConnection::onRTTUpdateBBR(int _rtt){
+    this->rtt = _rtt;
+    cout << "--------------------------------------" << endl;
+    cout << "New RTT captured time: " << this->rtt << endl;
+    cout << "--------------------------------------" << endl;
+    return;
+}
+
+void TCPConnection::sendDataBBr(){
+    int mode = START_UP;
+    int bandwidth = 1000;
+    int drain_rate = 25;
+    int rtt_increase_rate = 15;
+    int rtt_decrease_rate = 20;
+    int rtt_impact_rate = 3;
+    int bandwidth_impact_rate = 3;
+
+    for (int i = 0; i < SEND_DATA_CYCLES; i++){
+        sleep(1);
+        switch (mode)
+        {
+        case START_UP:
+            /*
+            Start to increase congestion window size like what we had in TCP RENO
+            */
+            
+            for(cwnd; cwnd < ssthresh; cwnd += cwnd){}
+            cout << "--------------------------------------" << endl;
+            cout << "Mode: Start Up" << endl;
+            cout << "Last congestion window size is: " << cwnd;
+            cout << endl << "--------------------------------------" << endl;
+            mode = DRAIN;
+            break;
+
+        case DRAIN:
+            /*
+            Decrease the window size with the DRAIN_RATE parameter
+            */
+            for(cwnd; cwnd > ssthresh; cwnd -= drain_rate)
+            cout << "--------------------------------------" << endl;
+            cout << "Mode: DRAIN" << endl;
+            cout << "Last congestion window size is: " << cwnd;
+            cout << endl << "--------------------------------------" << endl;
+            mode = PROBE_BW;
+            break;
+
+        case PROBE_BW:
+            /*
+            Calculate the estimated bandwidth for current time
+            */
+            if(cwnd > ssthresh){
+                cwnd -= bandwidth_impact_rate;
+            }
+            else if(cwnd < ssthresh){
+                cwnd += bandwidth_impact_rate;
+            }
+            cout << "--------------------------------------" << endl;
+            cout << "Mode: PROBE_BW" << endl;
+            cout << "Last congestion window size is: " << cwnd;
+            cout << endl << "--------------------------------------" << endl;
+            mode = PROBE_RTT;
+
+            break;
+
+        case PROBE_RTT:
+            /*
+            Calculate the estimated rtt for current time
+            */
+            if(cwnd > ssthresh){
+                onRTTUpdateBBR(rtt_increase_rate);
+                cwnd -= rtt_impact_rate;
+            }
+            else if(cwnd < ssthresh){
+                onRTTUpdateBBR(rtt_decrease_rate);
+                cwnd += rtt_impact_rate; 
+            }
+            cout << "--------------------------------------" << endl;
+            cout << "Mode: PROBE_RTT" << endl;
+            cout << "Last congestion window size is: " << cwnd;
+            cout << endl << "--------------------------------------" << endl;
+            mode = PROBE_BW;
+
+            break;
+
+        default:
+            break;
+        }
     }
 }
-
-void TCPConnection::newRenoSendData(){
-    // TODO
-}
-
-void TCPConnection::bbrSendData(){
-    // TODO
-}
-
-void TCPConnection::onPacketLoss(){
-    // TODO
-}
-
-void TCPConnection::onRTTUpdate(){
-    // TODO
-}
-
-
-
-

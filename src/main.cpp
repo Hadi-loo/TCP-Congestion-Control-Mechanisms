@@ -3,10 +3,13 @@
 
 
 int main(){
-    TCPConnection connection1(1, 65535, 0, TCP_NEW_RENO);
+
+    int connection_mode = TCP_RENO;
+
+    TCPConnection connection1(1, 65535, 0, connection_mode);
     
     while (!connection1.sendData()) {
-        if (!connection1.onPacketLoss(TCP_NEW_RENO, 1)) {
+        if (!connection1.onPacketLoss(connection_mode, 1)) {
             connection1.onRTTUpdate(1);
         }
         connection1.incRTT(1);

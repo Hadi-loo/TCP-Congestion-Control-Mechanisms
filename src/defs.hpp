@@ -7,6 +7,10 @@
 #define MAX_PACKETS 250000
 #define RETRANSMIT_TRIGGER 3
 #define TIMEOUT 5
+#define DRAIN_RATIO 0.9
+#define PROB_WB_ASCENT_RATE 1.25
+#define PROB_WB_DESCENT_RATE 0.95
+#define IN_FLIGHT_THRESHOLD 1024
 
 // TCP RENO MODES
 #define SLOW_START 0
@@ -19,6 +23,7 @@
 #define DRAIN 1
 #define PROBE_BW 2
 #define PROBE_RTT 3
+#define STEADY 4
 
 // connection modes
 #define TCP_RENO 0

@@ -29,16 +29,18 @@ bool packetLost(int cwnd) {
 }
 
 TCPConnection::TCPConnection(int _cwnd, int _ssthresh, int _rtt, int _connection_mode){
-    cwnd = _cwnd;                   // Initital congestion window size
-    ssthresh = _ssthresh;           // Initial slow start threshold
-    rtt = _rtt;                     // Initial round-trip time
-    bandwidth = 1000;               // network bandwidth
+    cwnd = _cwnd;                    // Initital congestion window size
+    ssthresh = _ssthresh;            // Initial slow start threshold
+    rtt = _rtt;                      // Initial round-trip time
+    bandwidth = 512;                 // network bandwidth
     last_ack = 0;
     acks_after_loss = 0;
     lost_count = 0;
     connection_mode = _connection_mode;
     reno_state = SLOW_START;
+    bbr_state = START_UP;
     timeout = 0;
+    in_flight_treshold = IN_FLIGHT_THRESHOLD;
 }
 
 void TCPConnection::incRTT(int amount) {
@@ -81,6 +83,40 @@ bool TCPConnection::sendData(){
             }
         }
     }
+
+    else if (connection_mode == TCP_BBR) {
+        cout << "RTT:  " << rtt << ",\t\tcwnd: " << cwnd << ",\t\tstate:" << bbr_state << endl;
+        // cout << cwnd << endl;    // This is for plotting
+        
+        if (last_ack >= MAX_PACKETS) {
+            cout << RED << "Max packets reached" << RESET << endl;
+            return true;
+        }
+
+        int first = last_ack + acks_after_loss;  
+        int last = first + cwnd - 1;
+        lost_count = 0;
+        acks_after_loss = 0;
+        for (int i = first; i < last; i++) {
+            if (packetLost(cwnd)) {
+                // cout << "cwnd: " << cwnd << ",\t\tssthresh:" << ssthresh << endl;        // just to see loss points
+                cout << RED << "Packet " << i << " lost" << RESET << endl; 
+                lost_count++;
+            }
+            else if (lost_count == 0) {
+                last_ack++;
+            }
+            else {
+                acks_after_loss++;
+            }
+        }
+
+        if (bbr_state == STEADY && rtt % 10 == 0) {
+            cwnd *= PROB_WB_ASCENT_RATE;
+            bbr_state = PROBE_BW;
+        }
+    }
+
     return false;
 }
 
@@ -114,114 +150,62 @@ bool TCPConnection::onPacketLoss(int connection_mode , int lost_packets_count){
         }
         return false;
     }
+
+    else if (connection_mode == TCP_BBR) {
+        return false;
+    }
+
     return false;
 }
 
 void TCPConnection::onRTTUpdate(int _rtt) {
-    switch (reno_state) {
-        case FAST_RETANSMIT:
-            reno_state = CONGESTION_AVOIDANCE;
-        case CONGESTION_AVOIDANCE:
-            cwnd += AIMD_INCREASE_RATE;
-            break;
-        case SLOW_START:
-            cwnd += cwnd;
-            if (cwnd >= ssthresh) {
-                cwnd = ssthresh;
+    
+    if (connection_mode == TCP_RENO || connection_mode == TCP_NEW_RENO) {
+        switch (reno_state) {
+            case FAST_RETANSMIT:
                 reno_state = CONGESTION_AVOIDANCE;
-            }
-            break;
-        default:
-            break;
+            case CONGESTION_AVOIDANCE:
+                cwnd += AIMD_INCREASE_RATE;
+                break;
+            case SLOW_START:
+                cwnd += cwnd;
+                if (cwnd >= ssthresh) {
+                    cwnd = ssthresh;
+                    reno_state = CONGESTION_AVOIDANCE;
+                }
+                break;
+            default:
+                break;
+        }
     }
-}
 
-void TCPConnection::onRTTUpdateBBR(int _rtt){
-    this->rtt = _rtt;
-    cout << "--------------------------------------" << endl;
-    cout << "New RTT captured time: " << this->rtt << endl;
-    cout << "--------------------------------------" << endl;
-    return;
-}
-
-void TCPConnection::sendDataBBr(){
-    int mode = START_UP;
-    int bandwidth = 1000;
-    int drain_rate = 25;
-    int rtt_increase_rate = 15;
-    int rtt_decrease_rate = 20;
-    int rtt_impact_rate = 3;
-    int bandwidth_impact_rate = 3;
-
-    for (int i = 0; i < SEND_DATA_CYCLES; i++){
-        sleep(1);
-        switch (mode)
-        {
-        case START_UP:
-            /*
-            Start to increase congestion window size like what we had in TCP RENO
-            */
-            
-            for(cwnd; cwnd < ssthresh; cwnd += cwnd){}
-            cout << "--------------------------------------" << endl;
-            cout << "Mode: Start Up" << endl;
-            cout << "Last congestion window size is: " << cwnd;
-            cout << endl << "--------------------------------------" << endl;
-            mode = DRAIN;
-            break;
-
-        case DRAIN:
-            /*
-            Decrease the window size with the DRAIN_RATE parameter
-            */
-            for(cwnd; cwnd > ssthresh; cwnd -= drain_rate)
-            cout << "--------------------------------------" << endl;
-            cout << "Mode: DRAIN" << endl;
-            cout << "Last congestion window size is: " << cwnd;
-            cout << endl << "--------------------------------------" << endl;
-            mode = PROBE_BW;
-            break;
-
-        case PROBE_BW:
-            /*
-            Calculate the estimated bandwidth for current time
-            */
-            if(cwnd > ssthresh){
-                cwnd -= bandwidth_impact_rate;
-            }
-            else if(cwnd < ssthresh){
-                cwnd += bandwidth_impact_rate;
-            }
-            cout << "--------------------------------------" << endl;
-            cout << "Mode: PROBE_BW" << endl;
-            cout << "Last congestion window size is: " << cwnd;
-            cout << endl << "--------------------------------------" << endl;
-            mode = PROBE_RTT;
-
-            break;
-
-        case PROBE_RTT:
-            /*
-            Calculate the estimated rtt for current time
-            */
-            if(cwnd > ssthresh){
-                onRTTUpdateBBR(rtt_increase_rate);
-                cwnd -= rtt_impact_rate;
-            }
-            else if(cwnd < ssthresh){
-                onRTTUpdateBBR(rtt_decrease_rate);
-                cwnd += rtt_impact_rate; 
-            }
-            cout << "--------------------------------------" << endl;
-            cout << "Mode: PROBE_RTT" << endl;
-            cout << "Last congestion window size is: " << cwnd;
-            cout << endl << "--------------------------------------" << endl;
-            mode = PROBE_BW;
-
-            break;
-
-        default:
-            break;
+    else if (connection_mode == TCP_BBR) {
+        switch (bbr_state) {
+            case START_UP:
+                cwnd += cwnd;
+                if (cwnd >= in_flight_treshold) {
+                    cwnd = in_flight_treshold;
+                    bbr_state = DRAIN;
+                }
+                break;
+            case DRAIN:
+                cwnd *= DRAIN_RATIO;
+                if (cwnd < bandwidth) {
+                    cwnd *= PROB_WB_ASCENT_RATE;
+                    bbr_state = PROBE_BW;
+                }
+                break;
+            case PROBE_BW:
+                cwnd *= PROB_WB_DESCENT_RATE;
+                if (cwnd < bandwidth) {
+                    bbr_state = STEADY;
+                }
+                break;
+            case STEADY:
+                cwnd = bandwidth;
+                break;
+            default:
+                break;
         }
     }
 }

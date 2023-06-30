@@ -22,7 +22,9 @@ private:
     int lost_count;
     int connection_mode;
     int reno_state;
+    int bbr_state;
     int timeout;
+    int in_flight_treshold;
 
 
 public:

@@ -3,7 +3,7 @@
 
 
 #define SEND_DATA_CYCLES 20
-#define AIMD_INCREASE_RATE 31
+#define AIMD_INCREASE_RATE 3
 
 // TCP RENO MODES
 #define SLOW_START 0
@@ -15,7 +15,6 @@
 #define DRAIN 1
 #define PROBE_BW 2
 #define PROBE_RTT 3
-#define DRAIN_RATE 25
 
 
 // connection modes

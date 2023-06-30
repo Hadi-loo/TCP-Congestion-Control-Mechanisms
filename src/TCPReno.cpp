@@ -55,7 +55,7 @@ void TCPConnection::sendData(bool newReno, int lost_packets_count){
             if(newReno == true)
                 cwnd /= 2;
             else
-                cwnd /= lost_packets_count;
+                cwnd /= 2 * lost_packets_count;
 
             mode = CONGESTION_AVOIDANCE;
             cout << "--------------------------------------" << endl;
@@ -76,7 +76,7 @@ void TCPConnection::onPacketLoss(int connection_mode , int lost_packets_count){
     cout << "Duplicate ACKs received" << endl;
     cout << "--------------------------------------" << endl;
     if(connection_mode == TCP_RENO)
-        this->sendData();
+        this->sendData(false, lost_packets_count);
     else if(connection_mode == TCP_NEW_RENO)
         this->sendData(true, lost_packets_count);
     else if(connection_mode == TCP_BBR)
@@ -106,7 +106,8 @@ void TCPConnection::sendDataBBr(){
     int drain_rate = 25;
     int rtt_increase_rate = 15;
     int rtt_decrease_rate = 20;
-    int bandwidth_impact_rate = 10;
+    int rtt_impact_rate = 3;
+    int bandwidth_impact_rate = 3;
 
     for (int i = 0; i < SEND_DATA_CYCLES; i++){
         sleep(1);
@@ -161,11 +162,11 @@ void TCPConnection::sendDataBBr(){
             */
             if(cwnd > ssthresh){
                 onRTTUpdateBBR(rtt_increase_rate);
-                cwnd -= (rtt_increase_rate/(1 + rtt)) * cwnd;
+                cwnd -= rtt_impact_rate;
             }
             else if(cwnd < ssthresh){
                 onRTTUpdateBBR(rtt_decrease_rate);
-                cwnd += (rtt_increase_rate/(1 + rtt)) * cwnd; 
+                cwnd += rtt_impact_rate; 
             }
             cout << "--------------------------------------" << endl;
             cout << "Mode: PROBE_RTT" << endl;

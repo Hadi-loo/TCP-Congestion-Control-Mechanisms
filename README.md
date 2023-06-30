@@ -29,3 +29,17 @@ wisely in the fast recovery mechanism. In TCP Reno, when multiple a sender recei
 duplicate ACKs for several sent packets, it divides the congestion window size several times,
 but in TCP New Reno, the algorithm only divides the congestino window size once, thus it is
 works more effiecient than the normal TCP Reno algorithm.
+
+#### 3. Definition of TCP New Reno algorithm:
+TCP BBR, also known as Bottleneck Bandwidth and Round-trip propagation time, is an congestion control algorithm created by Google. Its primary goal is to maximize network utilization and minimize latency by dynamically estimating the available bandwidth and network latency. BBR adopts a model-based approach to determine the ideal sending rate for TCP flows, considering both the bottleneck bandwidth and the round-trip time of the network. By accurately measuring these parameters, BBR optimizes the transmission rate, reducing queuing delay, and enhancing overall network performance. It is particularly effective in high-speed and long-distance networks, delivering faster and more efficient data transfer compared to traditional TCP congestion control algorithms.
+
+#### 4. Difference of TCP Reno, TCP New Reno, and TCP BBR:   
+TCP Reno is the original and most widely used congestion control algorithm. It works with slow start, AIMD, fast recovery, and fast retransmit protocols.   
+TCP New Reno is alomost like TCP Reno, but it works more wisely than TCP Reno in terms of fast recover, as described in part 3.     
+TCP BBR, on the other hand, is a modern congestion control algorithm developed by google in 2016. in BBR, the main focues is on estimating the available bandwidth and network latency (round-trip-time), in order to find the bandwidth-latency product and calculating the most efficient congestion window size of the network. BBR dynamically adjusts its congestion window based on the measured network conditions, aiming to maximize both network utilization and minimize latency. It is particularly effective in high-speed and long-distance networks, providing faster and more efficient data transfer compared to traditional TCP congestion control algorithms.    
+
+
+
+
+
+
